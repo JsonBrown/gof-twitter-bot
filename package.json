@@ -1,0 +1,16 @@
+{
+  "name": "gof-twitter-bot",
+  "version": "1.0.0",
+  "description": "An auto tweet bot built for the Girls on Fire (@teamgirlsonfire) Twitch.tv Team",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./app.js"
+  },
+  "author": "jason brown",
+  "license": "ISC",
+  "private": true,
+  "dependencies": {
+    "node-rest-client": "^1.8.0"
+  }
+}
