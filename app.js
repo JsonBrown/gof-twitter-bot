@@ -1,14 +1,10 @@
 var TTV = require('node-rest-client').Client;
 var Twitter = require('twitter');
+var config = require('config');
 
 const ttv = new TTV();
-const twitter = new Twitter();
-
-const members = {
-    "YellowKillerBee": "@yellowkillerbee",
-    "KungFuFruitCup": "@kungfufruitcup",
-    "MissKaddyKins" : "@misskaddykins"
-};
+const twitter = new Twitter(config.get('Twitter'));
+const members = config.get('Twitch.members');
 
 var args = {
     headers: {
