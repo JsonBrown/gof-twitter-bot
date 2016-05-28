@@ -1,8 +1,8 @@
-var TTV = require('node-rest-client').Client;
+var HTTP = require('node-rest-client').Client;
 var Twitter = require('twitter');
 var config = require('config');
 
-const ttv = new TTV();
+const http = new HTTP();
 const twitter = new Twitter(config.get('Twitter'));
 const members = config.get('Twitch.members');
 
@@ -14,7 +14,7 @@ var args = {
 
 Promise.all(Object.keys(members).map((m) =>{
     return new Promise((ok) => {
-        ttv.get(`https://api.twitch.tv/kraken/streams/${m}`,args,(data) => {
+        http.get(`https://api.twitch.tv/kraken/streams/${m}`,args,(data) => {
             ok(data.stream ? {
                 "Name": members[m],
                 "Preview": data.stream.preview.large
@@ -24,8 +24,26 @@ Promise.all(Object.keys(members).map((m) =>{
 })).then((online) => {
     var any = online.filter(on => !!on);
     if (any.length) {
-        var twitters = any.reduce((o,k) => o + `${k.Name} `,'');
-        var links = any.reduce((o,k) => o + `${k.Preview} `,'');
-        console.log(`These Girls on Fire are live right now! ${twitters} ${links}`);
+        UploadImages(any.map(on => on.Preview))
+            .then(medias => {
+                var twitters = any.reduce((o,k) => o + `${k.Name} `,'');
+                var status = {
+                    status: `These Girls on Fire are live right now! ${twitters}`,
+                    media_ids: medias.map(m => m.media_id_string)
+                };
+                client.post('statuses/update', status, (e,t) => {
+                    if (!e) console.log(t);
+                });
+            });
     }
 });
+function UploadImages(previews) {
+    return Promise.all(previews.map(p => new Promise((ok,no) => {
+        http.get(p,data => {
+            twitter.post('media/upload', {media: data}, (error, media) => {
+                if(error) no();
+                else ok(media);
+            });
+        })
+    })));
+}
