@@ -23,15 +23,17 @@ Promise.all(Object.keys(members).map((m) =>{
     })
 })).then((online) => {
     var any = online.filter(on => !!on);
+    console.log(any);
     if (any.length) {
         UploadImages(any.map(on => on.Preview))
             .then(medias => {
                 var twitters = any.reduce((o,k) => o + `${k.Name} `,'');
                 var status = {
                     status: `These Girls on Fire are live right now! ${twitters}`,
-                    media_ids: medias.map(m => m.media_id_string)
+                    media_ids: medias.reduce((o,k) => o + `${k.media_id_string},`, '')
                 };
-                client.post('statuses/update', status, (e,t) => {
+                console.log(status);
+                twitter.post('statuses/update', status, (e,t) => {
                     if (!e) console.log(t);
                 });
             });
