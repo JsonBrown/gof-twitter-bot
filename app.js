@@ -12,33 +12,30 @@ var args = {
     }
 };
 
-Promise.all(Object.keys(members).map((m) =>{
-    return new Promise((ok) => {
-        http.get(`https://api.twitch.tv/kraken/streams/${m}`,args,(data) => {
-            ok(data.stream ? {
-                "Name": members[m],
-                "Preview": data.stream.preview.large
-            } : null);
-        })
-    })
-})).then((online) => {
-    var any = online.filter(on => !!on);
-    console.log(any);
-    if (any.length) {
-        UploadImages(any.map(on => on.Preview))
-            .then(medias => {
-                var twitters = any.reduce((o,k) => o + `${k.Name} `,'');
-                var status = {
-                    status: `These Girls on Fire are live right now! ${twitters}`,
-                    media_ids: medias.reduce((o,k) => o + `${k.media_id_string},`, '')
-                };
-                console.log(status);
-                twitter.post('statuses/update', status, (e,t) => {
-                    if (!e) console.log(t);
-                });
+GetOnlineUsers(members)
+    .then((online) => {
+        var any = online.filter(on => !!on);
+        if (any.length) {
+            console.log(any);
+            for(var i = 0; i < any.length; i=i+4) {
+                var current = any.slice(i, (i+4 > any.length) ? any.length : i+4);
+                UploadImages(current.map(on => on.Preview)).then((medias) => Publish(current, medias));
+            }
+        }
+    });
+
+function GetOnlineUsers(members) {
+    return Promise.all(Object.keys(members).map((m) => {
+        return new Promise((ok) => {
+            http.get(`https://api.twitch.tv/kraken/streams/${m}`,args,(data) => {
+                ok(data.stream ? {
+                    "Name": members[m],
+                    "Preview": data.stream.preview.large
+                } : null);
             });
-    }
-});
+        });
+    }));
+}
 function UploadImages(previews) {
     return Promise.all(previews.map(p => new Promise((ok,no) => {
         http.get(p,data => {
@@ -46,6 +43,17 @@ function UploadImages(previews) {
                 if(error) no();
                 else ok(media);
             });
-        })
+        });
     })));
+}
+function Publish(any,medias) {
+    var twitters = any.reduce((o,k) => o + `${k.Name} `,'');
+    var status = {
+        status: `These Girls on Fire are live right now! ${twitters}`,
+        media_ids: medias.reduce((o,k) => o + `${k.media_id_string},`, '')
+    };
+    console.log(status);
+    twitter.post('statuses/update', status, (e,t) => {
+        if (!e) console.log(t);
+    });
 }
