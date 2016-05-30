@@ -13,8 +13,8 @@ var args = {
 };
 
 GetOnlineUsers(members)
-    .then((online) => {
-        var any = online.filter(on => !!on);
+    .then((users) => {
+        var any = users.filter(online => !!online);
         if (any.length) {
             console.log(any);
             for(var i = 0; i < any.length; i=i+4) {
