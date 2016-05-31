@@ -1,59 +1,24 @@
-var HTTP = require('node-rest-client').Client;
-var Twitter = require('twitter');
 var config = require('config');
-
-const http = new HTTP();
-const twitter = new Twitter(config.get('Twitter'));
+var data = require('./data/test');
 const members = config.get('Twitch.members');
 
-var args = {
-    headers: {
-        "Accept": "application/vnd.twitchtv.v3+json"
-    }
-};
-
-GetOnlineUsers(members)
+Promise.all(Object.keys(members).map((m) => data.GetUser(m,members[m])))
     .then((users) => {
         var any = users.filter(online => !!online);
         if (any.length) {
             console.log(any);
             for(var i = 0; i < any.length; i=i+4) {
-                var current = any.slice(i, (i+4 > any.length) ? any.length : i+4);
-                UploadImages(current.map(on => on.Preview)).then((medias) => Publish(current, medias));
+                Promise.all(any.slice(i, (i+4 > any.length) ? any.length : i+4).map(user => data.UploadImage(user)))
+                .then((users) => Publish(users));
             }
         }
     });
-
-function GetOnlineUsers(members) {
-    return Promise.all(Object.keys(members).map((m) => {
-        return new Promise((ok) => {
-            http.get(`https://api.twitch.tv/kraken/streams/${m}`,args,(data) => {
-                ok(data.stream ? {
-                    "Name": members[m],
-                    "Preview": data.stream.preview.large
-                } : null);
-            });
-        });
-    }));
-}
-function UploadImages(previews) {
-    return Promise.all(previews.map(p => new Promise((ok,no) => {
-        http.get(p,data => {
-            twitter.post('media/upload', {media: data}, (error, media) => {
-                if(error) no();
-                else ok(media);
-            });
-        });
-    })));
-}
-function Publish(any,medias) {
+function Publish(any) {
     var twitters = any.reduce((o,k) => o + `${k.Name} `,'');
     var status = {
         status: `These Girls on Fire are live right now! ${twitters}`,
-        media_ids: medias.reduce((o,k) => o + `${k.media_id_string},`, '')
+        media_ids: any.reduce((o,k) => o + `${k.MediaId},`, '')
     };
     console.log(status);
-    twitter.post('statuses/update', status, (e,t) => {
-        if (!e) console.log(t);
-    });
+    data.Tweet(status);
 }

@@ -10,30 +10,32 @@ var args = {
         "Accept": "application/vnd.twitchtv.v3+json"
     }
 };
-exports.tell = {
-    "GetUser": function (member){
-        return new Promise((ok) => {
-            http.get(`https://api.twitch.tv/kraken/streams/${m}`, args, (data) => {
-                ok(data.stream ? {
-                    "Name": members[m],
-                    "Preview": data.stream.preview.large
-                } : null);
+exports.GetUser = function (member,twitter){
+    return new Promise((ok) => {
+        http.get(`https://api.twitch.tv/kraken/streams/${member}`, args, (data) => {
+            ok(data.stream ? {
+                "Name": twitter,
+                "Preview": data.stream.preview.large,
+                "MediaId": null
+            } : null);
+        });
+    });
+};
+exports.UploadImage = function(user) {
+    return new Promise((ok,no) => {
+        http.get(user.Preview,data => {
+            twitter.post('media/upload', {media: data}, (error, media) => {
+                if(error) no();
+                else {
+                    user.MediaId = media.media_id_string;
+                    ok(user);
+                }
             });
         });
-    },
-    "UploadImage": function(image) {
-        return new Promise((ok,no) => {
-            http.get(image,data => {
-                twitter.post('media/upload', {media: data}, (error, media) => {
-                    if(error) no();
-                    else ok(media);
-                });
-            });
-        });
-    },
-    "Tweet": function(status) {
-        twitter.post('statuses/update', status, (e,t) => {
-            if (!e) console.log(t);
-        });
-    }
+    });
+};
+exports.Tweet = function(status) {
+    twitter.post('statuses/update', status, (e,t) => {
+        if (!e) console.log(t);
+    });
 };
