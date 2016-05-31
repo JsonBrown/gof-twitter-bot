@@ -8,8 +8,8 @@ Promise.all(Object.keys(members).map((m) => data.GetUser(m,members[m])))
         if (any.length) {
             console.log(any);
             for(var i = 0; i < any.length; i=i+4) {
-                Promise.all(any.slice(i, (i+4 > any.length) ? any.length : i+4).map(user => data.UploadImage(user)))
-                .then((users) => Publish(users));
+                Promise.all(any.slice(i, (i+4 > any.length) ? any.length : i+4).map(data.UploadImage))
+                .then(Publish);
             }
         }
     });
