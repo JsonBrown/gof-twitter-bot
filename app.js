@@ -1,5 +1,5 @@
 var config = require('config');
-var data = require('./data/test');
+var data = require('./data/web');
 const members = config.get('Twitch.members');
 
 Promise.all(Object.keys(members).map((m) => data.GetUser(m,members[m])))
