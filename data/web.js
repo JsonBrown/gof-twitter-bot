@@ -5,9 +5,11 @@ var config = require('config');
 
 const http = new HTTP();
 const twitter = new Twitter(config.get('Twitter'));
+const clientId =  config.get('Twitch.clientId')
 var args = {
     headers: {
-        "Accept": "application/vnd.twitchtv.v3+json"
+        "Accept": "application/vnd.twitchtv.v3+json",
+		"Client-ID": clientId
     }
 };
 exports.GetUser = function (member,twitter){
